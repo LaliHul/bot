@@ -15,11 +15,11 @@ longpoll = VkLongPoll(vk_session)
 def create_keyboard(response):
     keyboard = VkKeyboard(one_time=False)
 
-    if response == 'test':
+    if response == 'тест':
         keyboard.add_button('Белая кнопка', color=VkKeyboardColor.DEFAULT)
         keyboard.add_button('Зелёная кнопка', color=VkKeyboardColor.POSITIVE)
 
-        keyboard.add_line()  # Переход на вторую строку
+        keyboard.add_line()
         keyboard.add_button('Красная кнопка', color=VkKeyboardColor.NEGATIVE)
 
         keyboard.add_line()
@@ -28,7 +28,7 @@ def create_keyboard(response):
 
 
     elif response == 'привет':
-        keyboard.add_button('Тест', color=VkKeyboardColor.POSITIVE)
+        keyboard.add_button('*Тык*', color=VkKeyboardColor.POSITIVE)
 
     elif response == 'котики':
         keyboard.add_button('Котики!', color=VkKeyboardColor.POSITIVE)
@@ -40,16 +40,33 @@ def create_keyboard(response):
     keyboard = keyboard.get_keyboard()
     return keyboard
 
+def send_message(vk_session, id_type, id, message=None, attachment=None, keyboard=None):
+    vk_session.method('messages.send',{id_type: id, 'message': message, 'random_id': random.randint(-2147483648, +2147483648), "attachment": attachment, 'keyboard': keyboard})
+
+
 while True:
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW:
-            print('The message came in: ' + str(datetime.strftime(datetime.now(), '%H:%M')))
-            print('Message text: ' + str(event.text))
+            print('Написан: ' + str(datetime.strftime(datetime.now(), '%H:%M')))
+            print('Текст: ' + str(event.text))
             print(event.user_id)
             response = event.text.lower()
             keyboard = create_keyboard(response)
-            if event.from_user and not (event.from_me):
-                if response == 'hello':
-                    vk_session.method('messages.send', {'user_id': event.user_id, 'message': 'PrIvEt', 'random_id': 0})
-                elif response == "bye":
-                    vk_session.method('messages.send', {'user_id': event.user_id, 'message': 'PoKeDa', 'random_id': 0})
+            if event.from_user and not event.from_me:
+                if response == "котики":
+                    #attachment = get_pictures.get(vk_session, -130670107, session_api)
+                    send_message(vk_session, 'user_id', event.user_id, message='Держи котиков!', attachment=attachment, keyboard=keyboard)
+                elif response == "привет":
+                    send_message(vk_session, 'user_id', event.user_id, message='Нажми на кнопку, чтобы получить список команд',keyboard=keyboard)
+                elif response == "тест":
+                    send_message(vk_session, 'user_id', event.user_id, message='Тестовые команды',keyboard=keyboard)
+                elif response=='команды':
+                    send_message(vk_session, 'user_id', event.user_id, message='Список команд бота: \n \n 1)Команда1 \n 2)Команда2')
+                elif response=='закрыть':
+                    send_message(vk_session, 'user_id', event.user_id, message='Закрыть',keyboard=keyboard)
+
+        elif event.from_chat and not event.from_me:
+            if response == "котики":
+                #attachment = get_pictures.get(vk_session, -130670107, session_api)
+                #print(attachment)
+                send_message(vk_session, 'chat_id', event.chat_id, message='Держите котиков!', attachment= attachment)
